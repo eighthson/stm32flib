@@ -1,0 +1,7 @@
+The purpose of making this library is to provide a set of (high performance and high reliable)
+APIs to help people to operate the STM32F10x series of MCUs more easily and more quickly.
+
+Some of the new features of the ARM Cortex M3, such as bitbend, are used in the library to im-
+prove performance of the code.
+
+It stars at Aug 9th, 2012. In current stage, the only author is eighthson (eighthson@yeah.net).
