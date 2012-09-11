@@ -1,12 +1,8 @@
 #ifndef __STM32F_H__
 #define __STM32F_H__
 
-#if !(defined(STM32F103T8) || defined(STM32F103TB) || defined(STM32F103C8) || \
-	defined(STM32F103CB) || defined(STM32F103R8) || defined(STM32F103RB) || \
-	defined(STM32F103RC) || defined(STM32F103RD) || defined(STM32F103RE) || \
-	defined(STM32F103C8) || defined(STM32F103VB) || defined(STM32F103VC) || \
-	defined(STM32F103VD) || defined(STM32F103VE) || defined(STM32F103ZC) || \
-	defined(STM32F103ZD) || defined(STM32F103ZE))
+#if !(defined(STM32F100) || defined(STM32F101) || defined(STM32F102) || \
+	defined(STM32F103) || defined(STM32F105) || defined(STM32F107))
 #error "The production line of the MCU must be specified!"
 #endif
 
@@ -26,5 +22,9 @@
 
 #include "core/cpu.h"
 #include "core/flash.h"
+#include "core/rcc.h"
+
+#include "peripheral/gpio.h"
+#include "peripheral/usart.h"
 
 #endif // __STM32F_H__

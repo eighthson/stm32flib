@@ -1,36 +1,11 @@
 #ifndef __CPU_H__
 #define __CPU_H__
 
-#define HWREG32(addr)								(*((const uint32_t *)(addr)))
-#define HWREG32_SET(addr, val)			__asm__ __volatile__ ( \
-	"str %1, [%0]"		"\n\t" \
-	"ldr %1, [%0]"		"\n\t" \
-	::"r"(addr), "r"(val));
-
-#define HWREG16(addr)								(*((const uint16_t *)(addr)))
-#define HWREG16_SET(addr, val)			__asm__ __volatile__ ( \
-	"strh %1, [%0]"		"\n\t" \
-	"ldrh %1, [%0]"		"\n\t" \
-	::"r"(addr), "r"(val));
-
-#define HWREG8(addr)									(*((const uint8_t *)(addr)))
-#define HWREG8_SET(addr, val)				__asm__ __volatile__ ( \
-	"strh %1, [%0]"		"\n\t" \
-	"ldrh %1, [%0]"		"\n\t" \
-	::"r"(addr), "r"(val));
-
-#define BITBEND(addr, bit) 					HWREG32((((uint32_t)(addr)) & 0xF0000000) + \
+#define HWREG32(addr)							(*((uint32_t *)(addr)))
+#define HWREG16(addr)							(*((uint16_t *)(addr)))
+#define HWREG8(addr)								(*((uint8_t *)(addr)))
+#define BITBEND(addr, bit) 				HWREG32((((uint32_t)(addr)) & 0xF0000000) + \
 	0x2000000 + (((uint32_t)(addr)) & 0xFFFFF) * 32 + (bit) * 4)
-#define BITBEND_SET(addr, bit)			__asm__ __volatile__ ( \
-	"mov r0, #1"			"\n\t" \
-	"str r0, [%0]"		"\n\t" \
-	"ldr r0, [%0]"		"\n\t" \
-	::"r"(&BITBEND(addr, bit)):"r0");
-#define BITBEND_UNSET(addr, bit)		__asm__ __volatile__ ( \
-	"mov r0, #0"			"\n\t" \
-	"str r0, [%0]"		"\n\t" \
-	"ldr r0, [%0]"		"\n\t" \
-	::"r"(&BITBEND(addr, bit)):"r0");
 
 #define MAX(a, b)						(((a) > (b)) ? (a) : (b))
 #define MIN(a, b)						(((a) < (b)) ? (a) : (b))
@@ -39,7 +14,6 @@
 #define BV(i) 		(1 << (i))
 #define NOP() 		__asm__ __volatile__("nop")
 #define DSB()			__asm__ __volatile__ ("dsb")
-#define ISB()			__asm__ __volatile__ ("isb")
 
 typedef uint32_t critical_t;
 

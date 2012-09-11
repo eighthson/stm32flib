@@ -26,15 +26,17 @@ int __inline__ MSBi(uint32_t x) {
 }
 
 int CPU_SetExceptionStackAligment(enum_exception_stack_aligment align) {
-	register uint32_t r;
+	register uint32_t reg;
 
 	if (align == EXCEPTION_STACK_ALIGN_BY_4_BYTE) {
-		r = HWREG32(0xE000ED14) & (~BV(9));
-		HWREG32_SET(0xE000ED14, r);
+		reg = HWREG32(0xE000ED14) & (~BV(9));
+		HWREG32(0xE000ED14) = reg;
+		DSB();
 	}
 	else if (align == EXCEPTION_STACK_ALIGN_BY_8_BYTE) {
-		r = HWREG32(0xE000ED14) | BV(9);
-		HWREG32_SET(0xE000ED14, r);
+		reg = HWREG32(0xE000ED14) | BV(9);
+		HWREG32(0xE000ED14) = reg;
+		DSB();
 	}
 	else
 		return -1;
@@ -48,7 +50,7 @@ int CPU_GetExceptionStackAligment(void) {
 }
 
 int CPU_SetExceptionPriority(enum_exception exception, unsigned int prio) {
-	register uint32_t r;
+	register uint32_t reg;
 
 #if defined(DO_PARAM_CHECKING)
 	if (prio > 15)
@@ -57,20 +59,23 @@ int CPU_SetExceptionPriority(enum_exception exception, unsigned int prio) {
 
 	if (exception >=  EXCEPTION_MEMORY_MANAGEMENT_FAULT &&
 			exception <= EXCEPTION_USAGE_FAULT) {
-		r = HWREG32(0xE000ED18);
-		r &= ~(0x0F << (exception * 8 + 4));
-		r |= (prio << (exception * 8 + 4));
-		HWREG32_SET(0xE000ED18, r);
+		reg = HWREG32(0xE000ED18);
+		reg &= ~(0x0F << (exception * 8 + 4));
+		reg |= (prio << (exception * 8 + 4));
+		HWREG32(0xE000ED18) = reg;
+		DSB();
 	} else if (exception == EXCEPTION_SVCALL) {
-		r = HWREG32(0xE000ED1C);
-		r &= ~(0x0F << ((exception - 4) * 8 + 4));
-		r |= (prio << ((exception - 4) * 8 + 4));
-		HWREG32_SET(0xE000ED1C, r);
+		reg = HWREG32(0xE000ED1C);
+		reg &= ~(0x0F << ((exception - 4) * 8 + 4));
+		reg |= (prio << ((exception - 4) * 8 + 4));
+		HWREG32(0xE000ED1C) = reg;
+		DSB();
 	} else if (exception >= EXCEPTION_PENDSV && exception <= EXCEPTION_SYSTICK) {
-		r = HWREG32(0xE000ED20);
-		r &= ~(0x0F << ((exception - 8) * 8 + 4));
-		r |= (prio << ((exception - 8) * 8 + 4));
-		HWREG32_SET(0xE000ED20, r);
+		reg = HWREG32(0xE000ED20);
+		reg &= ~(0x0F << ((exception - 8) * 8 + 4));
+		reg |= (prio << ((exception - 8) * 8 + 4));
+		HWREG32(0xE000ED20) = reg;
+		DSB();
 	} else
 		return -1;
 
