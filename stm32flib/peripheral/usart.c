@@ -6,6 +6,7 @@
 
 #define USART_SR(usart)							HWREG32(usart + 0x00)
 #define USART_SR_RXNE(usart)				BITBEND(usart + 0x00, 5)
+#define USART_SR_TC(usart)					BITBEND(usart + 0x00, 6)
 #define USART_SR_TXE(usart)					BITBEND(usart + 0x00, 7)
 
 #define USART_DR(usart)							HWREG32(usart + 0x04)
@@ -13,7 +14,10 @@
 #define USART_BRR(usart)						HWREG32(usart + 0x08)
 
 #define USART_CR1(usart)						HWREG32(usart + 0x0C)
-#define USART_CR1_RXNEIE(usart)		BITBEND(usart + 0x0C, 5)
+#define USART_CR1_RE(usart)					BITBEND(usart + 0x0C, 2)
+#define USART_CR1_TE(usart)					BITBEND(usart + 0x0C, 3)
+#define USART_CR1_RXNEIE(usart)			BITBEND(usart + 0x0C, 5)
+#define USART_CR1_TCIE(usart)				BITBEND(usart + 0x0C, 6)
 #define USART_CR1_TXEIE(usart)			BITBEND(usart + 0x0C, 7)
 #define USART_CR1_PS(usart)					BITBEND(usart + 0x0C, 9)
 #define USART_CR1_PCE(usart)				BITBEND(usart + 0x0C, 10)
@@ -78,19 +82,19 @@ int USART_IsEnabled(enum_usart usart) {
 }
 
 int USART_SetBaud(enum_usart usart, unsigned int baud) {
-	register uint32_t ck, mantissa, fraction;
+	register uint32_t psc;
 
 	if (usart == USART1) {
-		ck = RCC_GetApb2Clk() / baud;
+		psc = RCC_GetApb2Clk() * 16 / baud;
 	} else if (usart == USART2 || usart == USART3) {
-		ck = RCC_GetApb1Clk() / baud;
+		psc = RCC_GetApb1Clk() * 16 / baud;
 	} else
 		return -1;
 
-	mantissa = ck / 16;
-	fraction = ck % 16;
+	if (psc > 0xFFFF || psc == 0)
+		return -1;
 
-	USART_BRR(usart) = (mantissa << 4) | fraction;
+	USART_BRR(usart) = psc;
 	DSB();
 
 	return 0;
@@ -106,10 +110,10 @@ int USART_GetBaud(enum_usart usart) {
 	} else
 		return -1;
 
-	return (int)(fck / (USART_BRR(usart) & 0xFFFF) / 16);
+	return (int)(fck * 16 / USART_BRR(usart));
 }
 
-int USART_SetDatWidth(enum_usart usart, unsigned int width) {
+int USART_SetDataWidth(enum_usart usart, unsigned int width) {
 #if defined(DO_PARAM_CHECKING)
 	if (usart != USART1 && usart != USART2 && usart != USART3)
 		return -1;
@@ -171,7 +175,7 @@ int USART_SetStopBit(enum_usart usart, enum_usart_stopbit stopbit) {
 	return 0;
 }
 
-int USART_GetDatWidth(enum_usart usart) {
+int USART_GetDataWidth(enum_usart usart) {
 #if defined(DO_PARAM_CHECKING)
 	if (usart != USART1 && usart != USART2 && usart != USART3)
 		return -1;
@@ -196,6 +200,72 @@ int USART_GetStopBit(enum_usart usart) {
 #endif
 
 	return (int)((USART_CR2(usart) & USART_CR2_STOP_MASK) >> USART_CR2_STOP_OFFSET);
+}
+
+int USART_EnableTransmission(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	USART_CR1_TE(usart) = 1;
+	DSB();
+
+	return 0;
+}
+
+int USART_DisableTransmission(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	USART_CR1_TE(usart) = 0;
+	DSB();
+
+	return 0;
+}
+
+int USART_IsTransmissionEnabled(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	return USART_CR1_TE(usart);
+}
+
+int USART_EnableReceiption(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	USART_CR1_RE(usart) = 1;
+	DSB();
+
+	return 0;
+}
+
+int USART_DisableReceiption(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	USART_CR1_RE(usart) = 0;
+	DSB();
+
+	return 0;
+}
+
+int USART_IsReceiptionEnabled(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	return USART_CR1_TE(usart);
 }
 
 int USART_EnableTxeInterrupt(enum_usart usart) {
@@ -264,7 +334,91 @@ int USART_IsRxneInterruptEnabled(enum_usart usart) {
 	return USART_CR1_RXNEIE(usart);
 }
 
-int USART_SendData(enum_usart usart, uint16_t data) {
+int USART_EnableTcInterrupt(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	USART_CR1_TCIE(usart) = 1;
+	DSB();
+
+	return 0;
+}
+
+int USART_DisableTcInterrupt(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	USART_CR1_TCIE(usart) = 0;
+	DSB();
+
+	return 0;
+}
+
+int USART_IsTcInterruptEnabled(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	return USART_CR1_TCIE(usart);
+}
+
+int __inline__ USART_IsTxeSet(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	return USART_SR_TXE(usart);
+}
+
+int __inline__ USART_IsTcSet(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	return USART_SR_TC(usart);
+}
+
+int __inline__ USART_ClearTc(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	USART_SR_TC(usart) = 0;
+	DSB();
+
+	return 0;
+}
+
+int __inline__ USART_IsRxneSet(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	return USART_SR_RXNE(usart);
+}
+
+int __inline__ USART_ClearRxne(enum_usart usart) {
+#if defined(DO_PARAM_CHECKING)
+	if (usart != USART1 && usart != USART2 && usart != USART3)
+		return -1;
+#endif
+
+	USART_SR_RXNE(usart) = 0;
+	DSB();
+
+	return 0;
+}
+
+int __inline__ USART_SendData(enum_usart usart, uint16_t data) {
 #if defined(DO_PARAM_CHECKING)
 	if (usart != USART1 && usart != USART2 && usart != USART3)
 		return -1;
@@ -278,7 +432,7 @@ int USART_SendData(enum_usart usart, uint16_t data) {
 	return 0;
 }
 
-int USART_QueryData(enum_usart usart) {
+int __inline__ USART_QueryData(enum_usart usart) {
 #if defined(DO_PARAM_CHECKING)
 	if (usart != USART1 && usart != USART2 && usart != USART3)
 		return -1;

@@ -64,7 +64,7 @@ typedef enum {
 	SYSCLK_TO_MCO = 4,
 	HSI_TO_MCO = 5,
 	HSE_TO_MCO = 6,
-	Pll_DIV_BY_2_TO_MCO = 7,
+	PLL_DIV_BY_2_TO_MCO = 7,
 } enum_mco;
 #else
 typedef enum {
