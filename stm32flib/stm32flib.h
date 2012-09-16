@@ -24,6 +24,7 @@
 #include "core/flash.h"
 #include "core/rcc.h"
 
+#include "peripheral/can.h"
 #include "peripheral/gpio.h"
 #include "peripheral/usart.h"
 

@@ -1,71 +1,63 @@
 #include "stm32flib.h"
 
-#define RCC_APB2ENR_USART1EN				BITBEND(0x40021018, 14)
-#define RCC_APB2ENR_USART2EN				BITBEND(0x4002101C, 17)
-#define RCC_APB2ENR_USART3EN				BITBEND(0x4002101C, 18)
+#define RCC_APB2ENR									0x40021018
+#define RCC_APB2ENR_USART1EN				14
 
-#define USART_SR(usart)							HWREG32(usart + 0x00)
-#define USART_SR_RXNE(usart)				BITBEND(usart + 0x00, 5)
-#define USART_SR_TC(usart)					BITBEND(usart + 0x00, 6)
-#define USART_SR_TXE(usart)					BITBEND(usart + 0x00, 7)
+#define RCC_APB1ENR									0x4002101C
+#define RCC_APB1ENR_USART2EN				17
+#define RCC_APB1ENR_USART3EN				18
 
-#define USART_DR(usart)							HWREG32(usart + 0x04)
+#define USART_SR(usart)							(usart + 0x00)
+#define USART_SR_RXNE								5
+#define USART_SR_TC									6
+#define USART_SR_TXE									7
 
-#define USART_BRR(usart)						HWREG32(usart + 0x08)
+#define USART_DR(usart)							(usart + 0x04)
 
-#define USART_CR1(usart)						HWREG32(usart + 0x0C)
-#define USART_CR1_RE(usart)					BITBEND(usart + 0x0C, 2)
-#define USART_CR1_TE(usart)					BITBEND(usart + 0x0C, 3)
-#define USART_CR1_RXNEIE(usart)			BITBEND(usart + 0x0C, 5)
-#define USART_CR1_TCIE(usart)				BITBEND(usart + 0x0C, 6)
-#define USART_CR1_TXEIE(usart)			BITBEND(usart + 0x0C, 7)
-#define USART_CR1_PS(usart)					BITBEND(usart + 0x0C, 9)
-#define USART_CR1_PCE(usart)				BITBEND(usart + 0x0C, 10)
-#define USART_CR1_M(usart)					BITBEND(usart + 0x0C, 11)
-#define USART_CR1_UE(usart)					BITBEND(usart + 0x0C, 13)
+#define USART_BRR(usart)						(usart + 0x08)
 
-#define USART_CR2(usart)						HWREG32(usart + 0x10)
-#define USART_CR2_STOP_OFFSET				12
-#define USART_CR2_STOP_MASK					(0x03 << USART_CR2_STOP_OFFSET)
+#define USART_CR1(usart)						(usart + 0x0C)
+#define USART_CR1_RE									2
+#define USART_CR1_TE									3
+#define USART_CR1_RXNEIE						5
+#define USART_CR1_TCIE								6
+#define USART_CR1_TXEIE							7
+#define USART_CR1_PS									9
+#define USART_CR1_PCE								10
+#define USART_CR1_M									11
+#define USART_CR1_UE									13
+
+#define USART_CR2(usart)						(usart + 0x10)
+#define USART_CR2_STOP_0						12
+#define USART_CR2_STOP_1						13
+#define USART_CR2_STOP_2						14
+#define USART_CR2_STOP_MASK					(0x03 << USART_CR2_STOP_0)
 
 int USART_Enable(enum_usart usart) {
 	if (usart == USART1) {
-		RCC_APB2ENR_USART1EN = 1;
-		DSB();
+		BITBEND_SET(RCC_APB2ENR, RCC_APB2ENR_USART1EN, 1);
 	} else if (usart == USART2) {
-		RCC_APB2ENR_USART2EN = 1;
-		DSB();
+		BITBEND_SET(RCC_APB1ENR, RCC_APB1ENR_USART2EN, 1);
 	} else if (usart == USART2) {
-		RCC_APB2ENR_USART2EN = 1;
-		DSB();
+		BITBEND_SET(RCC_APB1ENR, RCC_APB1ENR_USART3EN, 1);
 	} else
 		return -1;
 
-	USART_CR1_UE(usart) = 1;
-	DSB();
+	BITBEND_SET(USART_CR(usart), USART_CR1_UE, 1);
 
 	return 0;
 }
 
 int USART_Disable(enum_usart usart) {
 	if (usart == USART1) {
-		USART_CR1_UE(usart) = 0;
-		DSB();
-
-		RCC_APB2ENR_USART1EN = 1;
-		DSB();
+		BITBEND_SET(USART_CR(usart), USART_CR1_UE, 0);
+		BITBEND_SET(RCC_APB2ENR, RCC_APB2ENR_USART1EN, 0);
 	} else if (usart == USART2) {
-		USART_CR1_UE(usart) = 0;
-		DSB();
-
-		RCC_APB2ENR_USART2EN = 1;
-		DSB();
+		BITBEND_SET(USART_CR(usart), USART_CR1_UE, 0);
+		BITBEND_SET(RCC_APB1ENR, RCC_APB1ENR_USART2EN, 0);
 	} else if (usart == USART2) {
-		USART_CR1_UE(usart) = 0;
-		DSB();
-
-		RCC_APB2ENR_USART2EN = 1;
-		DSB();
+		BITBEND_SET(USART_CR(usart), USART_CR1_UE, 0);
+		BITBEND_SET(RCC_APB1ENR, RCC_APB1ENR_USART3EN, 0);
 	} else
 		return -1;
 
@@ -78,7 +70,7 @@ int USART_IsEnabled(enum_usart usart) {
 		return -1;
 #endif
 
-	return USART_CR1_UE(usart);
+	return BITBEND(USART_CR(usart), USART_CR1_UE);
 }
 
 int USART_SetBaud(enum_usart usart, unsigned int baud) {
@@ -94,8 +86,7 @@ int USART_SetBaud(enum_usart usart, unsigned int baud) {
 	if (psc > 0xFFFF || psc == 0)
 		return -1;
 
-	USART_BRR(usart) = psc;
-	DSB();
+	HWREG32_SET(USART_BRR(usart), psc);
 
 	return 0;
 }
@@ -110,7 +101,7 @@ int USART_GetBaud(enum_usart usart) {
 	} else
 		return -1;
 
-	return (int)(fck * 16 / USART_BRR(usart));
+	return (int)(fck * 16 / HWREG32(USART_BRR(usart)));
 }
 
 int USART_SetDataWidth(enum_usart usart, unsigned int width) {
@@ -120,11 +111,9 @@ int USART_SetDataWidth(enum_usart usart, unsigned int width) {
 #endif
 
 	if (width == 8) {
-		USART_CR1_M(usart) = 1;
-		DSB();
+		BITBEND_SET(USART_CR1(usart), USART_CR1_M, 0);
 	}  else	if (width == 9 && !USART_CR1_PCE(usart)) {
-		USART_CR1_M(usart) = 0;
-		DSB();
+		BITBEND_SET(USART_CR1(usart), USART_CR1_M, 1);
 	} else
 		return -1;
 
@@ -132,25 +121,20 @@ int USART_SetDataWidth(enum_usart usart, unsigned int width) {
 }
 
 int USART_SetParity(enum_usart usart, enum_usart_parity parity) {
+	register uint32_t reg;
+
 #if defined(DO_PARAM_CHECKING)
 	if (usart != USART1 && usart != USART2 && usart != USART3)
 		return -1;
+
+	if (parity != USART_PARITY_EVEN && parity != USART_PARITY_ODD && parity == USART_PARITY_NONE)
+		return -1;
 #endif
 
-	if (parity == USART_PARITY_EVEN || parity == USART_PARITY_ODD) {
-		if (!USART_CR1_M(usart)) {
-			USART_CR1_PS(usart) = parity & 0x01;
-			DSB();
-
-			USART_CR1_PCE(usart) = 1;
-			DSB();
-		} else
-			return -1;
-	} else if (parity == USART_PARITY_NONE) {
-		USART_CR1_PCE(usart) = 0;
-		DSB();
-	} else
-		return -1;
+	reg = HWREG32(USART_CR1(usart));
+	reg &= ~(BV(USART_CR1_PS) | BV(USART_CR1_PCE));
+	reg |= (parity << USART_CR1_PS);
+	HWREG32_SET(USART_CR1(usart), reg);
 
 	return 0;
 }
@@ -166,11 +150,10 @@ int USART_SetStopBit(enum_usart usart, enum_usart_stopbit stopbit) {
 		return -1;
 #endif
 
-	reg = USART_CR2(usart);
+	reg = HWREG32(USART_CR2(usart));
 	reg &= ~USART_CR2_STOP_MASK;
-	reg |= stopbit << USART_CR2_STOP_OFFSET;
-	USART_CR2(usart) = reg;
-	DSB();
+	reg |= (stopbit << USART_CR2_STOP_0);
+	HWREG32_SET(USART_CR2(usart), reg);
 
 	return 0;
 }
@@ -181,7 +164,7 @@ int USART_GetDataWidth(enum_usart usart) {
 		return -1;
 #endif
 
-	return (USART_CR1_M(usart) ? 9 : 8);
+	return (BITBEND(USART_CR1(usart), USART_CR1_M) ? 9 : 8);
 }
 
 int USART_GetParity(enum_usart usart) {
@@ -190,7 +173,7 @@ int USART_GetParity(enum_usart usart) {
 		return -1;
 #endif
 
-	return (int)((USART_CR1_PCE(usart) << 1) | USART_CR1_PS(usart));
+	return (int)((HWREG32(USART_CR1(usart)) >> USART_CR1_PS) & 0x03);
 }
 
 int USART_GetStopBit(enum_usart usart) {
@@ -199,7 +182,7 @@ int USART_GetStopBit(enum_usart usart) {
 		return -1;
 #endif
 
-	return (int)((USART_CR2(usart) & USART_CR2_STOP_MASK) >> USART_CR2_STOP_OFFSET);
+	return (int)((HWREG32(USART_CR2(usart)) & USART_CR2_STOP_MASK) >> USART_CR2_STOP_0);
 }
 
 int USART_EnableTransmission(enum_usart usart) {
@@ -208,8 +191,7 @@ int USART_EnableTransmission(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_TE(usart) = 1;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_TE, 1);
 
 	return 0;
 }
@@ -220,8 +202,7 @@ int USART_DisableTransmission(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_TE(usart) = 0;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_TE, 0);
 
 	return 0;
 }
@@ -232,7 +213,7 @@ int USART_IsTransmissionEnabled(enum_usart usart) {
 		return -1;
 #endif
 
-	return USART_CR1_TE(usart);
+	return BITBEND(USART_CR1(usart), USART_CR1_TE);
 }
 
 int USART_EnableReceiption(enum_usart usart) {
@@ -241,8 +222,7 @@ int USART_EnableReceiption(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_RE(usart) = 1;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_RE, 1);
 
 	return 0;
 }
@@ -253,8 +233,7 @@ int USART_DisableReceiption(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_RE(usart) = 0;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_RE, 0);
 
 	return 0;
 }
@@ -265,7 +244,7 @@ int USART_IsReceiptionEnabled(enum_usart usart) {
 		return -1;
 #endif
 
-	return USART_CR1_TE(usart);
+	return BITBEND(USART_CR1(usart), USART_CR1_RE);
 }
 
 int USART_EnableTxeInterrupt(enum_usart usart) {
@@ -274,8 +253,7 @@ int USART_EnableTxeInterrupt(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_TXEIE(usart) = 1;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_TXEIE, 1);
 
 	return 0;
 }
@@ -286,8 +264,7 @@ int USART_DisableTxeInterrupt(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_TXEIE(usart) = 0;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_TXEIE, 0);
 
 	return 0;
 }
@@ -298,7 +275,7 @@ int USART_IsTxeInterruptEnabled(enum_usart usart) {
 		return -1;
 #endif
 
-	return USART_CR1_TXEIE(usart);
+	return BITBEND(USART_CR1(usart), USART_CR1_TXEIE);
 }
 
 int USART_EnableRxneInterrupt(enum_usart usart) {
@@ -307,8 +284,7 @@ int USART_EnableRxneInterrupt(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_RXNEIE(usart) = 1;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_RXNEIE, 1);
 
 	return 0;
 }
@@ -319,8 +295,7 @@ int USART_DisableRxneInterrupt(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_RXNEIE(usart) = 1;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_RXNEIE, 0);
 
 	return 0;
 }
@@ -331,7 +306,7 @@ int USART_IsRxneInterruptEnabled(enum_usart usart) {
 		return -1;
 #endif
 
-	return USART_CR1_RXNEIE(usart);
+	return BITBEND(USART_CR1(usart), USART_CR1_RXNEIE);
 }
 
 int USART_EnableTcInterrupt(enum_usart usart) {
@@ -340,8 +315,7 @@ int USART_EnableTcInterrupt(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_TCIE(usart) = 1;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_TCIE, 1);
 
 	return 0;
 }
@@ -352,8 +326,7 @@ int USART_DisableTcInterrupt(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_CR1_TCIE(usart) = 0;
-	DSB();
+	BITBEND_SET(USART_CR1(usart), USART_CR1_TCIE, 0);
 
 	return 0;
 }
@@ -364,7 +337,7 @@ int USART_IsTcInterruptEnabled(enum_usart usart) {
 		return -1;
 #endif
 
-	return USART_CR1_TCIE(usart);
+	return BITBEND(USART_CR1(usart), USART_CR1_RXNEIE);
 }
 
 int __inline__ USART_IsTxeSet(enum_usart usart) {
@@ -373,7 +346,7 @@ int __inline__ USART_IsTxeSet(enum_usart usart) {
 		return -1;
 #endif
 
-	return USART_SR_TXE(usart);
+	return BITBEND(USART_SR(usart), USART_SR_TXE);
 }
 
 int __inline__ USART_IsTcSet(enum_usart usart) {
@@ -382,7 +355,7 @@ int __inline__ USART_IsTcSet(enum_usart usart) {
 		return -1;
 #endif
 
-	return USART_SR_TC(usart);
+	return BITBEND(USART_SR(usart), USART_SR_TC);
 }
 
 int __inline__ USART_ClearTc(enum_usart usart) {
@@ -391,8 +364,7 @@ int __inline__ USART_ClearTc(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_SR_TC(usart) = 0;
-	DSB();
+	BITBEND_SET(USART_SR(usart), USART_SR_TC, 0);
 
 	return 0;
 }
@@ -403,7 +375,7 @@ int __inline__ USART_IsRxneSet(enum_usart usart) {
 		return -1;
 #endif
 
-	return USART_SR_RXNE(usart);
+	return BITBEND(USART_SR(usart), USART_SR_RXNE);
 }
 
 int __inline__ USART_ClearRxne(enum_usart usart) {
@@ -412,8 +384,7 @@ int __inline__ USART_ClearRxne(enum_usart usart) {
 		return -1;
 #endif
 
-	USART_SR_RXNE(usart) = 0;
-	DSB();
+	BITBEND_SET(USART_SR(usart), USART_SR_RXNE, 0);
 
 	return 0;
 }
@@ -424,10 +395,10 @@ int __inline__ USART_SendData(enum_usart usart, uint16_t data) {
 		return -1;
 #endif
 
-	 if (!USART_SR_TXE(usart))
+	 if (!BITBEND(USART_SR(usart), USART_SR_TXE))
 		 return -1;
 
-	 USART_DR(usart) = data & 0x1F;
+	 HWREG32_SET(USART_DR(usart), data & 0x1F);
 
 	return 0;
 }
@@ -438,8 +409,8 @@ int __inline__ USART_QueryData(enum_usart usart) {
 		return -1;
 #endif
 
-	 if (!USART_SR_RXNE(usart))
+	 if (!BITBEND(USART_SR(usart), USART_SR_RXNE))
 		 return -1;
 
-	 return (int)(USART_DR(usart) & 0x1F);
+	 return (int)HWREG32(USART_DR(usart));
 }

@@ -30,13 +30,11 @@ int CPU_SetExceptionStackAligment(enum_exception_stack_aligment align) {
 
 	if (align == EXCEPTION_STACK_ALIGN_BY_4_BYTE) {
 		reg = HWREG32(0xE000ED14) & (~BV(9));
-		HWREG32(0xE000ED14) = reg;
-		DSB();
+		HWREG32_SET(0xE000ED14, reg);
 	}
 	else if (align == EXCEPTION_STACK_ALIGN_BY_8_BYTE) {
 		reg = HWREG32(0xE000ED14) | BV(9);
-		HWREG32(0xE000ED14) = reg;
-		DSB();
+		HWREG32_SET(0xE000ED14, reg);
 	}
 	else
 		return -1;
@@ -62,20 +60,17 @@ int CPU_SetExceptionPriority(enum_exception exception, unsigned int prio) {
 		reg = HWREG32(0xE000ED18);
 		reg &= ~(0x0F << (exception * 8 + 4));
 		reg |= (prio << (exception * 8 + 4));
-		HWREG32(0xE000ED18) = reg;
-		DSB();
+		HWREG32_SET(0xE000ED18, reg);
 	} else if (exception == EXCEPTION_SVCALL) {
 		reg = HWREG32(0xE000ED1C);
 		reg &= ~(0x0F << ((exception - 4) * 8 + 4));
 		reg |= (prio << ((exception - 4) * 8 + 4));
-		HWREG32(0xE000ED1C) = reg;
-		DSB();
+		HWREG32_SET(0xE000ED1C, reg);
 	} else if (exception >= EXCEPTION_PENDSV && exception <= EXCEPTION_SYSTICK) {
 		reg = HWREG32(0xE000ED20);
 		reg &= ~(0x0F << ((exception - 8) * 8 + 4));
 		reg |= (prio << ((exception - 8) * 8 + 4));
-		HWREG32(0xE000ED20) = reg;
-		DSB();
+		HWREG32_SET(0xE000ED20, reg);
 	} else
 		return -1;
 
