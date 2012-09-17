@@ -6,9 +6,7 @@ extern uint32_t _data_end_;
 extern uint32_t _bss_start_;
 extern uint32_t _bss_end_;
 extern uint32_t _stack_end_;
-
-void NVIC_IrqRouter(void) {
-}
+extern void NVIC_IrqRouter(void);
 
 void __attribute__((naked)) fault_exception_handler(void) {
 	while(1);
@@ -33,8 +31,6 @@ void reset_handler(void) {
 	for (pdst = &_bss_start_; pdst < &_bss_end_;) {
 		*pdst++ = 0;
 	}
-
-	DSB();
 
 	// Correctlly set SP then start the application program
 	__asm__ __volatile__(

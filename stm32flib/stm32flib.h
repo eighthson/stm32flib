@@ -22,9 +22,9 @@
 
 #include "core/cpu.h"
 #include "core/flash.h"
+#include "core/nvic.h"
 #include "core/rcc.h"
 
-#include "peripheral/can.h"
 #include "peripheral/gpio.h"
 #include "peripheral/usart.h"
 

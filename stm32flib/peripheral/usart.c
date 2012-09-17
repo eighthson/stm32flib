@@ -43,20 +43,20 @@ int USART_Enable(enum_usart usart) {
 	} else
 		return -1;
 
-	BITBEND_SET(USART_CR(usart), USART_CR1_UE, 1);
+	BITBEND_SET(USART_CR1(usart), USART_CR1_UE, 1);
 
 	return 0;
 }
 
 int USART_Disable(enum_usart usart) {
 	if (usart == USART1) {
-		BITBEND_SET(USART_CR(usart), USART_CR1_UE, 0);
+		BITBEND_SET(USART_CR1(usart), USART_CR1_UE, 0);
 		BITBEND_SET(RCC_APB2ENR, RCC_APB2ENR_USART1EN, 0);
 	} else if (usart == USART2) {
-		BITBEND_SET(USART_CR(usart), USART_CR1_UE, 0);
+		BITBEND_SET(USART_CR1(usart), USART_CR1_UE, 0);
 		BITBEND_SET(RCC_APB1ENR, RCC_APB1ENR_USART2EN, 0);
 	} else if (usart == USART2) {
-		BITBEND_SET(USART_CR(usart), USART_CR1_UE, 0);
+		BITBEND_SET(USART_CR1(usart), USART_CR1_UE, 0);
 		BITBEND_SET(RCC_APB1ENR, RCC_APB1ENR_USART3EN, 0);
 	} else
 		return -1;
@@ -70,7 +70,7 @@ int USART_IsEnabled(enum_usart usart) {
 		return -1;
 #endif
 
-	return BITBEND(USART_CR(usart), USART_CR1_UE);
+	return BITBEND(USART_CR1(usart), USART_CR1_UE);
 }
 
 int USART_SetBaud(enum_usart usart, unsigned int baud) {
@@ -112,7 +112,7 @@ int USART_SetDataWidth(enum_usart usart, unsigned int width) {
 
 	if (width == 8) {
 		BITBEND_SET(USART_CR1(usart), USART_CR1_M, 0);
-	}  else	if (width == 9 && !USART_CR1_PCE(usart)) {
+	}  else	if (width == 9 && !BITBEND(USART_CR1(usart), USART_CR1_PCE)) {
 		BITBEND_SET(USART_CR1(usart), USART_CR1_M, 1);
 	} else
 		return -1;
@@ -130,6 +130,9 @@ int USART_SetParity(enum_usart usart, enum_usart_parity parity) {
 	if (parity != USART_PARITY_EVEN && parity != USART_PARITY_ODD && parity == USART_PARITY_NONE)
 		return -1;
 #endif
+
+	if (BITBEND(USART_CR1(usart), USART_CR1_M) && parity != USART_PARITY_NONE)
+		return -1;
 
 	reg = HWREG32(USART_CR1(usart));
 	reg &= ~(BV(USART_CR1_PS) | BV(USART_CR1_PCE));

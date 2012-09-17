@@ -8,9 +8,9 @@
 #define GPIOx_CR_MODEx(pin)								((pin) * 4 + 0)
 #define GPIOx_CR_MODEx_MASK(pin)					(0x03 << (GPIOx_CR_MODEx(pin)))
 #define GPIOx_CR_CNFx(pin)								((pin) * 4 + 2)
-#define GPIOx_CR_CNFx_MASK(pin)					(0x03 << (GPIOx_CR_CNFx(pin)))
-#define GPIO_IDR(port)											(0x40010808 + (port) * 0x400)
-#define GPIO_ODR(port)											(0x4001080C + (port) * 0x400)
+#define GPIOx_CR_CNFx_MASK(pin)						(0x03 << (GPIOx_CR_CNFx(pin)))
+#define GPIOx_IDR(port)										(0x40010808 + (port) * 0x400)
+#define GPIOx_ODR(port)										(0x4001080C + (port) * 0x400)
 #define GPIOx_LCKR(port)									(0x40010818 + (port) * 0x400)
 #define GPIOx_LCKR_LCKK										16
 
@@ -57,12 +57,12 @@ int GPIO_SetPinMode(enum_gpio_pin pin, enum_gpio_pin_mode mode) {
 #endif
 
 	if (GPIO_PIN_NUMBER(pin) >= 0 && GPIO_PIN_NUMBER(pin) <= 7) {
-		if (BITBEND(GPIOx_LCKR(GPIO_GET_PORT(pin)), GPIO_PIN_NUMBER(pin)))
+		if (BITBEND(GPIOx_LCKR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin)))
 			return -1;
 
 		cr_addr = (uint32_t *)GPIOx_CRL(GPIO_PORT(pin));
 	} else if (GPIO_PIN_NUMBER(pin) <= 15) {
-		if (BITBEND(GPIOx_LCKR(GPIO_GET_PORT(pin)), GPIO_PIN_NUMBER(pin)))
+		if (BITBEND(GPIOx_LCKR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin)))
 			return -1;
 
 		cr_addr = (uint32_t *)GPIOx_CRH(GPIO_PORT(pin));
@@ -70,14 +70,14 @@ int GPIO_SetPinMode(enum_gpio_pin pin, enum_gpio_pin_mode mode) {
 		return -1;
 
 	if (mode == GPIO_IN_PULLDOWN || mode == GPIO_IN_PULLUP) {
-		BITBEND_SET(GPIOx_ODRx(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), mode & 0x01);
+		BITBEND_SET(GPIOx_ODR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), mode & 0x01);
 		mode = 8;
 	}
 
 	cr = HWREG32(cr_addr);
 	cr &= ~GPIOx_CR_MODEx_MASK(GPIO_PIN_NUMBER(pin));
 	cr &= ~GPIOx_CR_CNFx_MASK(GPIO_PIN_NUMBER(pin));
-	cr |= (mode << GPIOx_CR_MODEx_OFFSET(GPIO_PIN_NUMBER(pin)));
+	cr |= (mode << GPIOx_CR_MODEx(GPIO_PIN_NUMBER(pin)));
 	HWREG32_SET(cr_addr, cr);
 
 	return 0;
@@ -99,7 +99,7 @@ int GPIO_GetPinMode(enum_gpio_pin pin) {
 	cr = (cr >> (pin & 0x07)) & 0x0F;
 
 	if (cr == 8) {
-		if (BITBEND(GPIOx_ODRx(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin)))
+		if (BITBEND(GPIOx_ODR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin)))
 			return GPIO_IN_PULLUP;
 		else
 			return GPIO_IN_PULLDOWN;
@@ -117,18 +117,18 @@ int GPIO_LockPinMode(enum_gpio_pin pin) {
 			return -1;
 #endif
 
-	if (BITBEND(GPIOx_LCKR(GPIO_GET_PORT(pin)), GPIO_PIN_NUMBER(pin))) {
-		BITBEND_SET(GPIOx_LCKR(GPIO_GET_PORT(pin)), GPIO_PIN_NUMBER(pin), 1);
-		BITBEND_SET(GPIOx_LCKR(GPIO_GET_PORT(pin)), GPIO_PIN_NUMBER(pin), 0);
-		BITBEND_SET(GPIOx_LCKR(GPIO_GET_PORT(pin)), GPIO_PIN_NUMBER(pin), 1);
+	if (BITBEND(GPIOx_LCKR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin))) {
+		BITBEND_SET(GPIOx_LCKR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), 1);
+		BITBEND_SET(GPIOx_LCKR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), 0);
+		BITBEND_SET(GPIOx_LCKR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), 1);
 
 		while (1) {
-			if (!BITBEND(GPIOx_LCKR(GPIO_GET_PORT(pin)), GPIO_PIN_NUMBER(pin)))
+			if (!BITBEND(GPIOx_LCKR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin)))
 				break;
 		}
 
 		while (1) {
-			if (BITBEND(GPIOx_LCKR(GPIO_GET_PORT(pin)), GPIO_PIN_NUMBER(pin)))
+			if (BITBEND(GPIOx_LCKR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin)))
 				break;
 		}
 	}
@@ -148,7 +148,7 @@ int __inline__ GPIO_PinOut(enum_gpio_pin pin, enum_gpio_pin_stat stat) {
 		return -1;
 #endif
 
-	BITBEND_SET(GPIOx_ODRx(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), stat);
+	BITBEND_SET(GPIOx_ODR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), stat);
 
 	return 0;
 }
@@ -162,7 +162,7 @@ int __inline__ GPIO_PinOutHigh(enum_gpio_pin pin) {
 			return -1;
 #endif
 
-	BITBEND_SET(GPIOx_ODRx(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), 1);
+	BITBEND_SET(GPIOx_ODR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), 1);
 
 	return 0;
 }
@@ -176,7 +176,7 @@ int __inline__ GPIO_PinOutLow(enum_gpio_pin pin) {
 		return -1;
 #endif
 
-	BITBEND_SET(GPIOx_ODRx(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), 0);
+	BITBEND_SET(GPIOx_ODR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin), 0);
 
 	return 0;
 }
@@ -190,8 +190,8 @@ int __inline__ GPIO_PinInvert(enum_gpio_pin pin) {
 		return -1;
 #endif
 
-	BITBEND_SET(GPIOx_ODRx(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin),
-		!BITBEND(GPIOx_ODRx(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin)));
+	BITBEND_SET(GPIOx_ODR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin),
+		!BITBEND(GPIOx_ODR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin)));
 
 	return 0;
 }
@@ -205,5 +205,5 @@ int __inline__ GPIO_GetPinStat(enum_gpio_pin pin) {
 		return -1;
 #endif
 
-	return BITBEND(GPIOx_IDRx(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin));
+	return BITBEND(GPIOx_IDR(GPIO_PORT(pin)), GPIO_PIN_NUMBER(pin));
 }
