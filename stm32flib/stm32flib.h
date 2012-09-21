@@ -26,6 +26,7 @@
 #include "core/rcc.h"
 
 #include "peripheral/afio.h"
+#include "peripheral/can.h"
 #include "peripheral/gpio.h"
 #include "peripheral/usart.h"
 
